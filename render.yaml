@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: token-arena-web
+    runtime: node
+    plan: starter
+    buildCommand: echo "No build step required"
+    startCommand: node server/razorpay-server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

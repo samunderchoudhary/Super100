@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Token Arena — Real Money Gaming Platform</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-inner">
+        <a href="#screen-crash" class="brand-logo">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <span>TOKEN ARENA</span>
+        </a>
+
+        <!-- Game Switcher Tabs -->
+        <nav class="game-nav" aria-label="Game Modes">
+          <button class="nav-tab active" data-target="screen-crash">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+              <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-3.05 11a22.35 22.35 0 0 1-3.95 2z"></path>
+            </svg>
+            Rocket Run
+          </button>
+
+          <button class="nav-tab" data-target="screen-teenpatti">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="9" y1="21" x2="9" y2="9"></line>
+            </svg>
+            Three-Card Table
+          </button>
+
+          <button class="nav-tab" data-target="screen-highbid">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+              <path d="M4 22h16"></path>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+            </svg>
+            High Bid Arena
+          </button>
+
+          <button class="nav-tab" data-target="screen-admin">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Admin Panel
+          </button>
+        </nav>
+
+        <!-- Right Header Action Controls -->
+        <div class="header-controls">
+          <!-- Download APK Button -->
+          <a href="build-apk.bat" download class="btn btn-outline" id="download-apk-btn" title="Download Android APK">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download APK</span>
+          </a>
+
+          <!-- Balance Display -->
+          <div class="balance-badge" title="Token Balance (1 Token = ₹1)">
+            <div class="balance-label">Token Balance (₹1 = 1 Token)</div>
+            <div class="balance-value" id="header-balance">1,000</div>
+          </div>
+
+          <!-- Referral Button -->
+          <button class="btn btn-outline" id="referral-nav-btn" title="Referral Program & Bonus">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Referral</span>
+          </button>
+
+          <!-- Top Up Tokens via Razorpay Real Money -->
+          <button class="btn btn-primary" id="buy-tokens-btn" title="Buy Tokens via UPI QR, Card & Net Banking (1 Token = ₹1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Buy Tokens (₹1 = 1 Token)</span>
+          </button>
+
+          <!-- Withdrawal Button -->
+          <button class="btn btn-outline" id="withdrawal-nav-btn" title="Withdraw Funds to UPI">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7"></path>
+            </svg>
+            <span>Withdraw</span>
+          </button>
+
+          <!-- Refill Demo Tokens (Free Daily Reset) -->
+          <button class="btn-icon" id="claim-nav-btn" title="Refill Free Demo Tokens">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6"></path>
+              <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+
+          <!-- History / Ledger Modal Trigger -->
+          <button class="btn-icon" id="history-nav-btn" title="Transaction Ledger & History">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8v4l3 3"></path>
+              <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+          </button>
+
+          <!-- Sound Toggle Button -->
+          <button class="btn-icon" id="sound-toggle-btn" title="Toggle Sound Effects">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 1 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+          </button>
+
+          <!-- Rules Modal Trigger -->
+          <button class="btn-icon" id="rules-nav-btn" title="Game Rules & Info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Viewport Layout -->
+    <main class="main-content">
+      <!-- GAME 1: ROCKET RUN (CRASH GAME) -->
+      <section id="screen-crash" class="game-screen active">
+        <div class="screen-header">
+          <div class="screen-title-group">
+            <h1 class="screen-title">Rocket Run</h1>
+            <span class="screen-badge">Crash Multiplier</span>
+          </div>
+          <div class="screen-subtitle">
+            Cash out before flight crash • Real Token Stakes
+          </div>
+        </div>
+
+        <div class="crash-layout">
+          <!-- Canvas Display Area -->
+          <div class="crash-canvas-card">
+            <div class="canvas-container">
+              <canvas id="crash-canvas"></canvas>
+              <div class="multiplier-overlay">
+                <div id="crash-multiplier-text" class="multiplier-value">1.00x</div>
+                <div id="crash-status-text" class="round-status-text">NEXT FLIGHT IN 5S...</div>
+              </div>
+            </div>
+
+            <!-- Recent Round Multipliers History -->
+            <div class="crash-history-bar" id="crash-history-bar">
+              <span class="history-pill win">2.45x</span>
+              <span class="history-pill loss">1.12x</span>
+              <span class="history-pill win">5.80x</span>
+              <span class="history-pill win">1.95x</span>
+            </div>
+          </div>
+
+          <!-- Stake & Action Panel -->
+          <div class="crash-controls-panel">
+            <div class="form-group">
+              <label class="form-label" for="crash-stake-input">
+                Token Stake (1 Token = ₹1)
+                <span>Min: 10 | Max: Balance</span>
+              </label>
+              <div class="input-wrapper">
+                <input type="number" id="crash-stake-input" class="input-control" value="50" min="10" step="10">
+              </div>
+              <div class="preset-btns">
+                <button type="button" class="btn-preset" data-preset="10">10</button>
+                <button type="button" class="btn-preset" data-preset="+50">+50</button>
+                <button type="button" class="btn-preset" data-preset="2x">2X</button>
+                <button type="button" class="btn-preset" data-preset="max">MAX</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="crash-auto-input">
+                Auto Cash-Out Multiplier (Optional)
+                <span>e.g. 2.00x</span>
+              </label>
+              <div class="input-wrapper">
+                <input type="number" id="crash-auto-input" class="input-control" placeholder="Off" min="1.01" step="0.1">
+              </div>
+            </div>
+
+            <button type="button" id="crash-action-btn" class="btn btn-primary btn-block btn-lg">
+              PLACE BET (50 Tokens)
+            </button>
+
+            <div class="panel-disclaimer">
+              <strong style="color: var(--text-white);">Fairness Disclaimer:</strong> Past multipliers do not predict future flight duration. Results are server-authoritative.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME 2: THREE-CARD TABLE (TEEN PATTI) -->
+      <section id="screen-teenpatti" class="game-screen">
+        <div class="screen-header">
+          <div class="screen-title-group">
+            <h1 class="screen-title">Three-Card Table</h1>
+            <span class="screen-badge">Teen Patti Rules</span>
+          </div>
+          <button type="button" id="tp-rules-btn" class="btn btn-outline tp-rules-trigger">
+            View Hand Rankings
+          </button>
+        </div>
+
+        <div class="teen-patti-layout">
+          <!-- Poker Felt Table Card -->
+          <div class="poker-table-card">
+            <!-- Virtual Bot Opponents Row -->
+            <div class="opponents-row" id="tp-opponents-container">
+              <!-- Rendered dynamically by js/game-teen-patti.js -->
+            </div>
+
+            <!-- Central Pot Counter -->
+            <div class="table-pot-area">
+              <div class="pot-label">Token Pot (₹1 = 1 Token)</div>
+              <div class="pot-amount" id="tp-pot-amount">0</div>
+            </div>
+
+            <!-- Player Seat & Card Field -->
+            <div class="player-seat active" style="align-self: center;">
+              <div class="card-hand" id="tp-user-cards">
+                <div class="playing-card face-down"></div>
+                <div class="playing-card face-down"></div>
+                <div class="playing-card face-down"></div>
+              </div>
+              <div style="margin-top: var(--space-2); text-align: center;">
+                <div class="player-name">Your Hand</div>
+                <div id="tp-user-status" class="player-status-tag">Waiting to Join</div>
+                <div id="tp-user-hand-name" style="font-weight: 700; color: var(--electric-cyan); font-size: 0.9rem; margin-top: 4px;">
+                  Join table to deal cards
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Action Panel -->
+          <div class="teen-patti-action-panel">
+            <!-- Lobby Controls -->
+            <div id="tp-lobby-controls" class="tp-lobby-wrapper">
+              <div class="form-group tp-lobby-input-group">
+                <label class="form-label" for="tp-entry-input">Table Entry Amount (Tokens)</label>
+                <input type="number" id="tp-entry-input" class="input-control" value="25" min="5" step="5">
+              </div>
+              <div class="preset-btns tp-lobby-presets">
+                <button type="button" class="btn-preset" data-preset="10">10</button>
+                <button type="button" class="btn-preset" data-preset="25">25</button>
+                <button type="button" class="btn-preset" data-preset="50">50</button>
+                <button type="button" class="btn-preset" data-preset="100">100</button>
+              </div>
+              <button type="button" id="tp-join-btn" class="btn btn-primary btn-lg tp-lobby-join-btn">
+                JOIN TABLE
+              </button>
+            </div>
+
+            <!-- Active Gameplay Action Controls -->
+            <div id="tp-action-controls" class="tp-action-wrapper" style="display: none;">
+              <button type="button" id="tp-see-cards-btn" class="btn btn-outline btn-lg">
+                SEE CARDS
+              </button>
+              <button type="button" id="tp-continue-btn" class="btn btn-primary btn-lg">
+                CONTINUE
+              </button>
+              <button type="button" id="tp-fold-btn" class="btn btn-danger btn-lg">
+                FOLD
+              </button>
+              <button type="button" id="tp-showdown-btn" class="btn btn-success btn-lg" disabled>
+                SHOWDOWN
+              </button>
+            </div>
+
+            <!-- Round Settled Controls -->
+            <div id="tp-settled-controls" class="tp-settled-wrapper" style="display: none;">
+              <button type="button" id="tp-play-again-btn" class="btn btn-primary btn-lg btn-block">
+                PLAY ANOTHER HAND
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME 3: HIGH BID ARENA (SEALED AUCTION) -->
+      <section id="screen-highbid" class="game-screen">
+        <div class="screen-header">
+          <div class="screen-title-group">
+            <h1 class="screen-title">High Bid Arena</h1>
+            <span class="screen-badge">Sealed Auction • 2x Win</span>
+          </div>
+          <button type="button" id="highbid-rules-btn" class="btn btn-outline" style="padding: var(--space-2) var(--space-4); font-size: 0.85rem;">
+            Tie Policy & Math Rules
+          </button>
+        </div>
+
+        <div class="auction-layout">
+          <!-- Main Auction Display Card -->
+          <div class="auction-main-card">
+            <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; justify-content: center;">
+              <div class="bid-count-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span id="highbid-bid-count">0 Sealed Bids</span>
+              </div>
+              <span class="screen-badge" id="highbid-round-id">HB-INITIAL</span>
+            </div>
+
+            <!-- Countdown Clock Circle -->
+            <div class="auction-timer-circle" id="highbid-timer-circle">
+              <div class="auction-timer-seconds" id="highbid-timer-seconds">15s</div>
+              <div class="auction-timer-label" id="highbid-timer-label">AUCTION CLOSING IN</div>
+            </div>
+
+            <!-- QR Code Display Box for Scan to Pay Integration -->
+            <div id="highbid-qr-payment-box" style="margin-top: var(--space-3); background: var(--bg-raised); border: 1px solid var(--border-line); border-radius: var(--radius-md); padding: var(--space-4); text-align: center; max-width: 280px; width: 100%;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--electric-cyan); margin-bottom: 8px; text-transform: uppercase;">Scan & Pay UPI QR</div>
+              <div style="background: #ffffff; padding: 10px; border-radius: 8px; display: inline-block;">
+                <img src="assets/QR-Code.jpeg" alt="UPI Scan & Pay QR Code" style="width: 160px; height: 160px; object-fit: contain; display: block;" />
+              </div>
+              <div style="font-size: 0.72px; color: var(--text-muted); margin-top: 6px;">Scan with any UPI app to deposit instantly</div>
+            </div>
+
+            <!-- Sealed Receipt Panel (Shown when user has placed a bid) -->
+            <div id="highbid-user-receipt" style="display: none; width: 100%; max-width: 420px; background: var(--bg-raised); border: 1px solid var(--electric-cyan); border-radius: var(--radius-md); padding: var(--space-4); text-align: left;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 700; color: var(--electric-cyan); font-size: 0.85rem;">SEALED BID CONFIRMED</span>
+                <span id="highbid-receipt-id" style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">RCPT-1234</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span style="font-size: 0.9rem; color: var(--text-slate);">Round: <strong id="highbid-receipt-round" style="color: var(--text-white);">HB-101</strong></span>
+                <span style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800; color: var(--text-white);" id="highbid-receipt-amount">100 Tokens</span>
+              </div>
+            </div>
+
+            <!-- Result Outcome List (Shown on auction close) -->
+            <div id="highbid-result-panel" style="display: none; width: 100%; max-width: 500px; text-align: left;">
+              <div id="highbid-result-banner" style="padding: var(--space-4); border-radius: var(--radius-md); background: var(--bg-raised); border: 1px solid var(--border-line); margin-bottom: var(--space-4);">
+                <div id="highbid-result-title" style="font-family: var(--font-heading); font-weight: 800; font-size: 1.2rem; color: var(--text-white);">
+                  Auction Settlement
+                </div>
+                <div id="highbid-result-detail" style="font-size: 0.9rem; color: var(--text-slate); margin-top: 4px;">
+                  Evaluating bid entries...
+                </div>
+              </div>
+
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-slate); margin-bottom: var(--space-2); text-transform: uppercase;">
+                Participant Bid Ranking
+              </div>
+              <div id="highbid-participants-list" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                <!-- Populated dynamically by HighBidGame -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Bid Controls Side Panel -->
+          <div class="auction-side-panel">
+            <div class="form-group">
+              <label class="form-label" for="highbid-amount-input">
+                Your Sealed Bid (Tokens)
+                <span>Min: 10 | Max: 500</span>
+              </label>
+              <div class="input-wrapper">
+                <input type="number" id="highbid-amount-input" class="input-control" value="50" min="10" max="500" step="10">
+              </div>
+              <div class="preset-btns">
+                <button type="button" class="btn-preset highbid-preset-btn" data-preset="25">25</button>
+                <button type="button" class="btn-preset highbid-preset-btn" data-preset="50">50</button>
+                <button type="button" class="btn-preset highbid-preset-btn" data-preset="100">100</button>
+                <button type="button" class="btn-preset highbid-preset-btn" data-preset="250">250</button>
+              </div>
+            </div>
+
+            <button type="button" id="highbid-submit-btn" class="btn btn-primary btn-block btn-lg">
+              SUBMIT SEALED BID
+            </button>
+
+            <div style="background: var(--bg-raised); border-radius: var(--radius-md); padding: var(--space-4); font-size: 0.8rem; color: var(--text-slate); line-height: 1.5;">
+              <strong style="color: var(--warning-amber); font-size: 0.85rem;">Highest-Bidder Rule:</strong>
+              <ul style="margin-left: 16px; margin-top: 4px;">
+                <li>The unique highest bidder receives 2× their bid as gross credit (+1× net).</li>
+                <li>All other bids are lost.</li>
+                <li><strong>Tie Policy:</strong> If two or more share the highest bid, everyone gets a 100% full refund!</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN PANEL SCREEN -->
+      <section id="screen-admin" class="game-screen">
+        <div class="screen-header">
+          <div class="screen-title-group">
+            <h1 class="screen-title">Admin Panel</h1>
+            <span class="screen-badge" style="background: var(--error-coral); color: #fff;">Payout Management</span>
+          </div>
+          <div class="screen-subtitle">
+            Review, approve or reject user withdrawal requests
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-line); border-radius: var(--radius-md); padding: var(--space-4);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Pending Requests</div>
+            <div id="admin-stat-pending" style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--warning-amber); margin-top: 4px;">0</div>
+          </div>
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-line); border-radius: var(--radius-md); padding: var(--space-4);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Total Approved Payouts</div>
+            <div id="admin-stat-approved" style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--success-light); margin-top: 4px;">0 Tokens</div>
+          </div>
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-line); border-radius: var(--radius-md); padding: var(--space-4);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Total Rejected</div>
+            <div id="admin-stat-rejected" style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--error-coral); margin-top: 4px;">0</div>
+          </div>
+        </div>
+
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-line); border-radius: var(--radius-md); overflow: hidden;">
+          <div style="padding: var(--space-4); border-bottom: 1px solid var(--border-line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+            <h3 style="font-size: 1.05rem; color: var(--text-white);">Withdrawal Requests Queue</h3>
+            <div style="display: flex; gap: var(--space-2);">
+              <button type="button" class="btn btn-outline admin-filter-btn active" data-filter="all" style="padding: 4px 10px; font-size: 0.8rem;">All</button>
+              <button type="button" class="btn btn-outline admin-filter-btn" data-filter="pending" style="padding: 4px 10px; font-size: 0.8rem;">Pending</button>
+              <button type="button" class="btn btn-outline admin-filter-btn" data-filter="approved" style="padding: 4px 10px; font-size: 0.8rem;">Approved</button>
+              <button type="button" class="btn btn-outline admin-filter-btn" data-filter="rejected" style="padding: 4px 10px; font-size: 0.8rem;">Rejected</button>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Request ID</th>
+                  <th>UPI / VPA</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Requested At</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-requests-tbody">
+                <!-- Populated dynamically by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL OVERLAY: REFERRAL DIALOG -->
+  <div id="referral-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Referral Program</h2>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="Close Referral">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--bg-raised); padding: var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); text-align: center;">
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Your Mobile No (Referral ID)</div>
+          <div id="referral-my-id" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--electric-cyan); margin: 6px 0;">Not Set</div>
+          <div style="font-size: 0.82rem; color: var(--text-slate);">Share your mobile number with friends. When they enter it as their referral ID, you both get 200 bonus tokens!</div>
+        </div>
+
+        <form id="referral-phone-form" style="margin-bottom: var(--space-4);">
+          <div class="form-group">
+            <label class="form-label" for="referral-phone-input">Set Your Mobile Number (Required for Referral ID)</label>
+            <div class="input-wrapper" style="display: flex; gap: var(--space-2);">
+              <input type="tel" id="referral-phone-input" class="input-control" placeholder="10-digit mobile number" maxlength="10">
+              <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Save ID</button>
+            </div>
+          </div>
+        </form>
+
+        <form id="referral-apply-form">
+          <div class="form-group">
+            <label class="form-label" for="referral-code-input">Have a Friend's Referral ID?</label>
+            <div class="input-wrapper" style="display: flex; gap: var(--space-2);">
+              <input type="tel" id="referral-code-input" class="input-control" placeholder="Friend's mobile no" maxlength="10">
+              <button type="submit" class="btn btn-success" style="white-space: nowrap;">Apply Code</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Enter a friend's mobile number to claim your 200 tokens bonus immediately.</div>
+          </div>
+        </form>
+
+        <div style="margin-top: var(--space-4); border-top: 1px solid var(--border-line); pt: var(--space-3); padding-top: var(--space-3);">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-slate);">
+            <span>Total Referrals Given:</span>
+            <strong id="referral-stat-count" style="color: var(--text-white);">0</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-slate); margin-top: 6px;">
+            <span>Referral Bonus Earned:</span>
+            <strong id="referral-stat-earned" style="color: var(--success-light);">0 Tokens</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL OVERLAY: WITHDRAWAL DIALOG -->
+  <div id="withdrawal-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Withdraw Funds</h2>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="Close Withdrawal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="background: var(--bg-raised); padding: var(--space-3); border-radius: var(--radius-md); margin-bottom: var(--space-4); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Available Balance</div>
+            <div id="withdrawal-available-balance" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--text-white);">1,000 Tokens</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.75rem; color: var(--warning-amber); text-transform: uppercase;">Min Withdrawal</div>
+            <div style="font-weight: 700; color: var(--text-white);">2,000 Tokens</div>
+          </div>
+        </div>
+
+        <form id="withdrawal-form">
+          <div class="form-group">
+            <label class="form-label" for="withdrawal-upi-input">UPI ID / VPA</label>
+            <div class="input-wrapper">
+              <input type="text" id="withdrawal-upi-input" class="input-control" placeholder="username@upi" required>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Enter your valid UPI handle for direct transfer.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="withdrawal-amount-input">Withdrawal Amount (Tokens)</label>
+            <div class="input-wrapper">
+              <input type="number" id="withdrawal-amount-input" class="input-control" placeholder="Min 2000" min="2000" step="1" required>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Minimum amount is 2,000 tokens. Bonus amounts cannot be withdrawn.</div>
+          </div>
+
+          <button type="submit" id="withdrawal-submit-btn" class="btn btn-primary btn-block btn-lg" style="margin-top: var(--space-4);">
+            REQUEST WITHDRAWAL
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL OVERLAY: RULES & GAME INFO -->
+  <div id="rules-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Game Rules & Mathematics</h2>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="Close Rules">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="rules-tabs">
+          <button type="button" id="rule-tab-crash" class="rules-tab-btn active">Rocket Run (Crash)</button>
+          <button type="button" id="rule-tab-teenpatti" class="rules-tab-btn">Three-Card Table</button>
+          <button type="button" id="rule-tab-highbid" class="rules-tab-btn">High Bid Arena</button>
+        </div>
+
+        <!-- Crash Rules -->
+        <div id="rule-content-crash">
+          <h3 style="color: var(--text-white); margin-bottom: var(--space-2);">Rocket Run Multiplier Rules</h3>
+          <p style="margin-bottom: var(--space-3);">Choose a token stake before the flight launches. The multiplier begins at 1.00× and grows exponentially. You must click Cash Out before the rocket crashes to lock in your return.</p>
+          <p style="margin-bottom: var(--space-3);"><strong>Calculation:</strong> Gross Return = Stake × Cash-Out Multiplier (rounded down to nearest whole token). Net Profit = Gross Return − Stake.</p>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Past flight multipliers have no correlation to future round outcomes.</p>
+        </div>
+
+        <!-- Teen Patti Rules -->
+        <div id="rule-content-teenpatti" style="display: none;">
+          <h3 style="color: var(--text-white); margin-bottom: var(--space-2);">Three-Card Hand Rankings (Highest to Lowest)</h3>
+          <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-4);">
+            <li><strong>Trail / Trio:</strong> Three cards of equal rank (e.g., A-A-A, K-K-K).</li>
+            <li><strong>Pure Sequence (Straight Flush):</strong> Three consecutive cards of the same suit (e.g., A-2-3 or A-K-Q).</li>
+            <li><strong>Sequence (Straight):</strong> Three consecutive cards of mixed suits.</li>
+            <li><strong>Color (Flush):</strong> Three cards of the same suit, not in sequence.</li>
+            <li><strong>Pair:</strong> Two cards of equal rank. Higher pair wins; kicker breaks ties.</li>
+            <li><strong>High Card:</strong> Highest card rank rules when no combination is formed.</li>
+          </ol>
+          <p style="font-size: 0.85rem; color: var(--text-slate);">All seated players pay equal table entry into a pooled pot. Best hand takes the entire pot!</p>
+        </div>
+
+        <!-- High Bid Rules -->
+        <div id="rule-content-highbid" style="display: none;">
+          <h3 style="color: var(--text-white); margin-bottom: var(--space-2);">High Bid Arena Auction Rules</h3>
+          <p style="margin-bottom: var(--space-3);">Submit a single sealed token bid during the countdown window. Bids remain secret until the round closes.</p>
+          <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-4);">
+            <li><strong>Unique Winner:</strong> The single highest bidder receives 2× their bid amount as gross credit (+1× net gain). Non-winning bids are charged as lost.</li>
+            <li><strong>Tie Policy:</strong> If two or more participants share the highest bid, no winner is declared and 100% of all accepted bids are refunded in full.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL OVERLAY: TRANSACTION HISTORY & LEDGER -->
+  <div id="history-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card" style="max-width: 780px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Token Ledger & Round Audit History</h2>
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <select id="history-filter-game" class="input-control" style="padding: 4px 8px; font-size: 0.85rem;">
+            <option value="all">All Games</option>
+            <option value="Rocket Run">Rocket Run</option>
+            <option value="Three-Card Table">Three-Card Table</option>
+            <option value="High Bid Arena">High Bid Arena</option>
+            <option value="Top Up">Top Up / Purchases</option>
+            <option value="Withdrawal">Withdrawals</option>
+            <option value="Referral">Referral</option>
+          </select>
+          <button type="button" class="btn-icon" data-dismiss="modal" aria-label="Close History">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 0; overflow-x: auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Round ID</th>
+              <th>Game</th>
+              <th>Reason / Activity</th>
+              <th>Token Delta</th>
+              <th>Balance After</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <!-- Populated dynamically by openHistoryModal -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Core JavaScript Dependency Chain -->
+  <script src="js/payments.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/teen-patti-eval.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/game-crash.js"></script>
+  <script src="js/game-teen-patti.js"></script>
+  <script src="js/game-high-bid.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    try {
+      if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+      }
+    } catch (e) {
+      // Service worker disabled in sandboxed preview contexts
+    }
+  </script>
+</body>
+</html>
