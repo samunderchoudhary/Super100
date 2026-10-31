@@ -301,13 +301,30 @@
   }
 
   function openReferralModal(store) {
+    var auth = window.Super100Auth;
+    if (!auth || !auth.getUser || !auth.getUser()) {
+      if (auth && auth.openGate) auth.openGate();
+      showToast('Please sign in to view and share your referral link.', 'info');
+      return;
+    }
     var modal = document.getElementById('referral-modal');
     if (!modal) {
-      modal = renderReferralModal(store);
-      document.body.appendChild(modal);
-    } else {
-      updateReferralModalState(modal, store);
+      showToast('Referral panel is unavailable. Please refresh the page.', 'error');
+      return;
     }
+    ['referral-phone-form', 'referral-apply-form'].forEach(function(id) {
+      var legacyForm = modal.querySelector('#' + id);
+      if (legacyForm) legacyForm.style.display = 'none';
+    });
+    var oldId = modal.querySelector('#referral-my-id');
+    var profile = auth.getProfile && auth.getProfile();
+    if (oldId) oldId.textContent = profile && profile.referralCode ? profile.referralCode : 'Loading…';
+    var intro = modal.querySelector('.modal-body > div:first-child');
+    if (intro) intro.innerHTML = '<div style="font-weight:800;color:var(--electric-cyan);margin-bottom:6px;">Invite friends with your personal link</div><div style="font-size:.84rem;color:var(--text-slate);line-height:1.5;">Share your Super100 invitation link. When a new person signs in, chooses “Yes, I was referred” and confirms your registered mobile number, you receive 200 tokens and they receive 100 tokens.</div>';
+    var count = modal.querySelector('#referral-stat-count');
+    var earned = modal.querySelector('#referral-stat-earned');
+    if (count && profile) count.textContent = String(Number(profile.referralCount || 0));
+    if (earned && profile) earned.textContent = Number(profile.referralRewardTotal || 0).toLocaleString() + ' Tokens';
     setupModalDismiss(modal);
     modal.classList.add('open');
   }
@@ -442,42 +459,8 @@
     if (claimForm) {
       claimForm.onsubmit = function(e) {
         e.preventDefault();
-        var code = (claimInput ? claimInput.value : '').trim().replace(/\D/g, '');
-
-        if (errorMsg) errorMsg.style.display = 'none';
-
-        if (code.length !== 10) {
-          if (errorMsg) {
-            errorMsg.textContent = 'Please enter a valid 10-digit mobile referral ID.';
-            errorMsg.style.display = 'block';
-          }
-          showToast('Invalid referral ID format', 'warning');
-          return;
-        }
-
-        var myId = inputDisplay ? inputDisplay.value.trim() : '';
-        if (code === myId) {
-          if (errorMsg) {
-            errorMsg.textContent = 'You cannot use your own referral ID.';
-            errorMsg.style.display = 'block';
-          }
-          showToast('Cannot refer yourself', 'warning');
-          return;
-        }
-
-        try {
-          if (localStorage.getItem('token_arena_has_claimed_ref') === 'true') {
-            showToast('You have already claimed a referral bonus!', 'warning');
-            return;
-          }
-          localStorage.setItem('token_arena_has_claimed_ref', 'true');
-        } catch(e){}
-
-        store.updateBalance(200, 'Referral Bonus (From ' + code + ')', 'REF-' + Date.now(), 'Store');
-        showToast('Success! 200 tokens added via referral.', 'success');
-        if (window.appSound) window.appSound.playWin();
-
-        modal.classList.remove('open');
+        showToast('Referral rewards are available only through an eligible Super100 referral link after sign-in.', 'warning');
+        return false;
       };
     }
 
@@ -493,22 +476,9 @@
   }
 
   function checkUrlReferralParam(store) {
-    try {
-      var params = new URLSearchParams(window.location.search);
-      var refCode = params.get('ref');
-      if (refCode && refCode.length === 10) {
-        var claimed = localStorage.getItem('token_arena_has_claimed_ref') === 'true';
-        var myId = localStorage.getItem('token_arena_my_referral_id');
-        if (!claimed && refCode !== myId) {
-          localStorage.setItem('token_arena_has_claimed_ref', 'true');
-          store.updateBalance(200, 'Referral Bonus (From ' + refCode + ')', 'REF-' + Date.now(), 'Store');
-          setTimeout(function() {
-            showToast('Referral link detected! 200 bonus tokens added to your balance.', 'success');
-            if (window.appSound) window.appSound.playWin();
-          }, 1000);
-        }
-      }
-    } catch(e){}
+    // Referral URLs are captured by js/auth.js and redeemed by the authenticated
+    // Firebase/Firestore server transaction. Never award tokens in browser storage.
+    return;
   }
 
   // Withdraw Modal Feature

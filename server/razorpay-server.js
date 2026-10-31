@@ -54,6 +54,30 @@ function create(options) {
   const hasSite = fs.existsSync(path.join(siteDir, "index.html"));
   const warnings = [];
 
+  // Firebase Admin is optional at local startup, but required for authenticated accounts/referrals.
+  let firebaseAdmin = null;
+  let firestore = null;
+  try {
+    firebaseAdmin = require("firebase-admin");
+    let serviceAccount = null;
+    const serviceAccountPath = env.FIREBASE_SERVICE_ACCOUNT_PATH || "/etc/secrets/super100-firebase-admin.json";
+    if (env.FIREBASE_SERVICE_ACCOUNT_JSON) serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    else if (fs.existsSync(serviceAccountPath)) serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
+    if (serviceAccount) {
+      if (!firebaseAdmin.apps.length) {
+        firebaseAdmin.initializeApp({
+          credential: firebaseAdmin.credential.cert(serviceAccount),
+          projectId: env.FIREBASE_PROJECT_ID || serviceAccount.project_id
+        });
+      }
+      firestore = firebaseAdmin.firestore();
+    } else {
+      warnings.push("Firebase service account not configured; account and referral APIs are disabled.");
+    }
+  } catch (e) {
+    warnings.push("Firebase Admin could not initialize: " + e.message);
+  }
+
   const reply = function (status, body) { return { status: status, body: body }; };
   const problem = function (status, error, message) { return reply(status, { error: error, message: message }); };
 
@@ -98,6 +122,248 @@ function create(options) {
     if (all[orderId]) return;
     all[orderId] = { amount: amount, paidAt: new Date().toISOString() };
     try { fs.writeFileSync(ledger, JSON.stringify(all, null, 2)); } catch (e) {}
+  }
+
+
+  // Firebase Authentication + Firestore-backed profiles and one-time referral rewards.
+  function firebaseConfig() {
+    const projectId = env.FIREBASE_PROJECT_ID || "";
+    return {
+      apiKey: env.FIREBASE_API_KEY || "",
+      authDomain: env.FIREBASE_AUTH_DOMAIN || (projectId ? projectId + ".firebaseapp.com" : ""),
+      projectId: projectId,
+      appId: env.FIREBASE_APP_ID || "",
+      messagingSenderId: env.FIREBASE_MESSAGING_SENDER_ID || ""
+    };
+  }
+
+  async function authenticatedUid(req) {
+    if (!firebaseAdmin || !firestore) throw new Error("Firebase account service is not configured.");
+    const header = String(req.headers.authorization || "");
+    const match = header.match(/^Bearer\s+(.+)$/i);
+    if (!match) throw new Error("Please sign in to continue.");
+    const decoded = await firebaseAdmin.auth().verifyIdToken(match[1]);
+    return decoded.uid;
+  }
+
+  function makeReferralCode() {
+    return crypto.randomBytes(5).toString("hex").toUpperCase();
+  }
+
+  function normaliseProfilePhone(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 15 ? digits : "";
+  }
+
+  async function bootstrapAccount(req, body) {
+    if (!firebaseAdmin || !firestore) return problem(503, "firebase_not_configured", "Firebase Admin is not configured on the server yet.");
+    let uid;
+    try { uid = await authenticatedUid(req); }
+    catch (e) { return problem(401, "unauthorized", e.message || "Please sign in again."); }
+
+    const authUser = await firebaseAdmin.auth().getUser(uid);
+    const accountEmail = String(body.email || authUser.email || "").trim().toLowerCase();
+    const phone = normaliseProfilePhone(body.phone);
+    if (body.phone && !phone) return problem(400, "phone", "Enter a valid phone number with 10–15 digits.");
+    const displayName = String(body.displayName || authUser.displayName || "").trim().slice(0, 80);
+    const referralCode = String(body.referralCode || "").trim().toUpperCase();
+    const userRef = firestore.collection("users").doc(uid);
+    const eventRef = firestore.collection("referralEvents").doc(uid);
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const generatedCode = makeReferralCode();
+      const ownCodeRef = firestore.collection("referralCodes").doc(generatedCode);
+      try {
+        const result = await firestore.runTransaction(async function (tx) {
+          const userSnap = await tx.get(userRef);
+          const codeSnap = await tx.get(ownCodeRef);
+          if (codeSnap.exists && codeSnap.data().uid !== uid) throw new Error("REFERRAL_CODE_COLLISION");
+
+          if (userSnap.exists) {
+            const existing = userSnap.data();
+            const patch = { updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp() };
+            if (displayName) patch.displayName = displayName;
+            if (phone) patch.phone = phone;
+            tx.set(userRef, patch, { merge: true });
+            return Object.assign({}, existing, patch, { alreadyRegistered: true, referralRewardDelta: 0 });
+          }
+
+          const newUser = {
+            uid: uid,
+            email: accountEmail,
+            displayName: displayName,
+            phone: phone,
+            referralCode: generatedCode,
+            pendingReferralCode: /^[A-Z0-9]{8,12}$/.test(referralCode) ? referralCode : "",
+            referredBy: null,
+            referralCount: 0,
+            referralRewardTotal: 0,
+            walletBalance: 0,
+            createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+          };
+          tx.create(userRef, newUser);
+          tx.create(ownCodeRef, { uid: uid, createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp() });
+          return Object.assign({}, newUser, { alreadyRegistered: false, referralRewardDelta: 0 });
+        });
+        return reply(200, {
+          ok: true,
+          uid: uid,
+          email: result.email || accountEmail,
+          displayName: result.displayName || displayName,
+          phone: result.phone || phone,
+          referralCode: result.referralCode,
+          referredBy: result.referredBy || null,
+          referralCount: Number(result.referralCount || 0),
+          referralRewardTotal: Number(result.referralRewardTotal || 0),
+          referralRewardDelta: Number(result.referralRewardDelta || 0),
+          alreadyRegistered: Boolean(result.alreadyRegistered)
+        });
+      } catch (e) {
+        if (e.message === "REFERRAL_CODE_COLLISION") continue;
+        throw e;
+      }
+    }
+    return problem(503, "referral_code", "Could not allocate a referral code. Please try again.");
+  }
+
+  async function claimReferral(req, body) {
+    let uid;
+    try { uid = await authenticatedUid(req); }
+    catch (e) { return problem(401, "unauthorized", e.message || "Please sign in."); }
+
+    const enteredPhone = cleanPhone(body.referrerPhone);
+    const referralCode = String(body.referralCode || "").trim().toUpperCase();
+    if (!enteredPhone) return problem(400, "phone", "Enter the referrer's valid 10-digit mobile number.");
+    if (!/^[A-Z0-9]{8,12}$/.test(referralCode)) return problem(400, "referral_code", "Open the invitation link again, then confirm the referral.");
+    if (!firebaseAdmin || !firestore) return problem(503, "firebase_not_configured", "Referral service is unavailable.");
+
+    const userRef = firestore.collection("users").doc(uid);
+    const codeRef = firestore.collection("referralCodes").doc(referralCode);
+    const eventRef = firestore.collection("referralEvents").doc(uid);
+
+    try {
+      const result = await firestore.runTransaction(async function (tx) {
+        const userSnap = await tx.get(userRef);
+        const codeSnap = await tx.get(codeRef);
+        const eventSnap = await tx.get(eventRef);
+        if (!userSnap.exists) throw new Error("PROFILE_NOT_FOUND");
+        const current = userSnap.data();
+        if (current.referredBy || eventSnap.exists) throw new Error("ALREADY_REFERRED");
+        if (String(current.pendingReferralCode || "") !== referralCode) throw new Error("REFERRAL_NOT_ELIGIBLE");
+        if (!codeSnap.exists) throw new Error("INVALID_REFERRAL");
+        const referrerUid = String(codeSnap.data().uid || "");
+        if (!referrerUid || referrerUid === uid) throw new Error("SELF_REFERRAL");
+        const referrerRef = firestore.collection("users").doc(referrerUid);
+        const referrerSnap = await tx.get(referrerRef);
+        if (!referrerSnap.exists) throw new Error("INVALID_REFERRAL");
+        const referrer = referrerSnap.data();
+        if (cleanPhone(referrer.phone) !== enteredPhone) throw new Error("PHONE_MISMATCH");
+        const currentEmail = String(current.email || "").trim().toLowerCase();
+        const referrerEmail = String(referrer.email || "").trim().toLowerCase();
+        if (currentEmail && referrerEmail && currentEmail === referrerEmail) throw new Error("SELF_REFERRAL");
+
+        const newBalance = Math.max(0, Number(current.walletBalance || 0)) + 100;
+        const referrerBalance = Math.max(0, Number(referrer.walletBalance || 0)) + 200;
+        tx.update(userRef, {
+          referredBy: referrerUid,
+          pendingReferralCode: "",
+          referralRewardTotal: Number(current.referralRewardTotal || 0) + 100,
+          walletBalance: newBalance,
+          updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+        tx.update(referrerRef, {
+          referralCount: Number(referrer.referralCount || 0) + 1,
+          referralRewardTotal: Number(referrer.referralRewardTotal || 0) + 200,
+          walletBalance: referrerBalance,
+          updatedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+        tx.create(firestore.collection("walletLedger").doc("REF_NEW_" + uid), {
+          uid: uid, type: "referral_reward", amount: 100, direction: "credit",
+          balanceAfter: newBalance, relatedUid: referrerUid,
+          createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+        tx.create(firestore.collection("walletLedger").doc("REF_REF_" + uid), {
+          uid: referrerUid, type: "referral_reward", amount: 200, direction: "credit",
+          balanceAfter: referrerBalance, relatedUid: uid,
+          createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+        tx.create(eventRef, {
+          referredUid: uid, referrerUid: referrerUid, referralCode: referralCode,
+          referrerPhoneLast4: enteredPhone.slice(-4),
+          newUserReward: 100, referrerReward: 200,
+          createdAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+        return { newUserBalance: newBalance, referrerReward: 200, newUserReward: 100 };
+      });
+      return reply(200, { ok: true, claimed: true, newUserReward: result.newUserReward, message: "Referral confirmed. 100 tokens have been credited to your account; the referrer receives 200 tokens." });
+    } catch (e) {
+      const map = {
+        PROFILE_NOT_FOUND: [404, "profile_not_found", "Your account profile is not ready."],
+        ALREADY_REFERRED: [409, "already_referred", "This account has already used a referral."],
+        REFERRAL_NOT_ELIGIBLE: [409, "referral_not_eligible", "This account was not created through this invitation link, so it is not eligible for this referral reward."],
+        INVALID_REFERRAL: [400, "invalid_referral", "This invitation link is not valid."],
+        SELF_REFERRAL: [400, "self_referral", "You cannot refer yourself."],
+        PHONE_MISMATCH: [400, "phone_mismatch", "That mobile number does not match the person who invited you."]
+      };
+      const item = map[e.message];
+      if (item) return problem(item[0], item[1], item[2]);
+      throw e;
+    }
+  }
+
+  async function declineReferral(req) {
+    let uid;
+    try { uid = await authenticatedUid(req); }
+    catch (e) { return problem(401, "unauthorized", e.message || "Please sign in."); }
+    const userRef = firestore.collection("users").doc(uid);
+    try {
+      await firestore.runTransaction(async function (tx) {
+        const snap = await tx.get(userRef);
+        if (!snap.exists) throw new Error("PROFILE_NOT_FOUND");
+        const data = snap.data();
+        if (data.referredBy) throw new Error("ALREADY_REFERRED");
+        tx.update(userRef, {
+          pendingReferralCode: "",
+          referralDeclinedAt: firebaseAdmin.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      return reply(200, { ok: true, declined: true });
+    } catch (e) {
+      if (e.message === "PROFILE_NOT_FOUND") return problem(404, "profile_not_found", "Your account profile is not ready.");
+      if (e.message === "ALREADY_REFERRED") return problem(409, "already_referred", "This account has already used a referral.");
+      throw e;
+    }
+  }
+
+  async function walletMe(req) {
+    let uid;
+    try { uid = await authenticatedUid(req); }
+    catch (e) { return problem(401, "unauthorized", e.message || "Please sign in."); }
+    const snap = await firestore.collection("users").doc(uid).get();
+    if (!snap.exists) return problem(404, "profile_not_found", "Your account profile is not ready.");
+    const data = snap.data();
+    const ledgerSnap = await firestore.collection("walletLedger").where("uid", "==", uid).limit(50).get();
+    return reply(200, {
+      uid: uid,
+      balance: Math.max(0, Number(data.walletBalance || 0)),
+      transactions: ledgerSnap.docs.map(function (doc) { const row = doc.data(); return { id: doc.id, type: row.type, amount: Number(row.amount || 0), direction: row.direction, balanceAfter: Number(row.balanceAfter || 0), createdAt: row.createdAt && row.createdAt.toDate ? row.createdAt.toDate().toISOString() : null }; })
+    });
+  }
+
+  async function referralMe(req) {
+    let uid;
+    try { uid = await authenticatedUid(req); }
+    catch (e) { return problem(401, "unauthorized", e.message || "Please sign in."); }
+    const snap = await firestore.collection("users").doc(uid).get();
+    if (!snap.exists) return problem(404, "profile_not_found", "Your account profile is not ready. Please sign out and sign in again.");
+    const user = snap.data();
+    return reply(200, {
+      referralCode: user.referralCode || "",
+      referralCount: Number(user.referralCount || 0),
+      referralRewardTotal: Number(user.referralRewardTotal || 0),
+      referred: Boolean(user.referredBy)
+    });
   }
 
   function baseOf(req) {
@@ -329,6 +595,34 @@ function create(options) {
     cors(req, res);
     if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
     
+    if (route === "/api/firebase-config" && req.method === "GET") {
+      const config = firebaseConfig();
+      return send(res, 200, config);
+    }
+    if (route === "/api/account/bootstrap" && req.method === "POST") {
+      const body = await jsonBody(req);
+      if (!body) return send(res, 400, { error: "body", message: "Send account details as JSON." });
+      const r = await bootstrapAccount(req, body);
+      return send(res, r.status, r.body);
+    }
+    if (route === "/api/referrals/decline" && req.method === "POST") {
+      const r = await declineReferral(req);
+      return send(res, r.status, r.body);
+    }
+    if (route === "/api/referrals/claim" && req.method === "POST") {
+      const body = await jsonBody(req);
+      if (!body) return send(res, 400, { error: "body", message: "Send referral details as JSON." });
+      const r = await claimReferral(req, body);
+      return send(res, r.status, r.body);
+    }
+    if (route === "/api/wallet/me" && req.method === "GET") {
+      const r = await walletMe(req);
+      return send(res, r.status, r.body);
+    }
+    if (route === "/api/referrals/me" && req.method === "GET") {
+      const r = await referralMe(req);
+      return send(res, r.status, r.body);
+    }
     if (route === "/api/payments/health" && req.method === "GET") {
       return send(res, 200, { ok: true, mode: live ? "production" : "sandbox", keys: Boolean(rzpKeyId && rzpKeySecret) });
     }
