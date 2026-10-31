@@ -14,6 +14,10 @@
     init() {
       // 1. Initialize Store and Audio System
       this.store = new window.TokenStore();
+      // Initialize Super100 login and referral system
+if (window.Super100Auth && typeof window.Super100Auth.init === 'function') {
+  window.Super100Auth.init(this.store);
+}
       this.sound = new window.SoundFX();
 
       // Expose globally for components and sound triggers
